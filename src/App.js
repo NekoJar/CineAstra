@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { unmountComponentAtNode } from "react-dom";
+
 import StarRating from "./StarRating";
 
 const tempMovieData = [
@@ -55,7 +55,7 @@ const average = (arr) =>
 const KEY = "923066e6";
 
 export default function App() {
-  const [query, setQuery] = useState("fate stay");
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -78,14 +78,22 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
+  function handleHome() {
+    setQuery("");
+    setSelectedId(null);
+  }
+
   useEffect(
     function () {
+      const controller = new AbortController();
+
       async function fetchMovies() {
         try {
           setIsLoading(true);
           setError("");
           const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
+            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
+            { signal: controller.signal }
           );
 
           if (!res.ok) throw new Error("Fetch Data Failed");
@@ -93,9 +101,12 @@ export default function App() {
           const data = await res.json();
           if (data.Response === "False") throw new Error("Movie Not Found");
           setMovies(data.Search);
+          setError("");
         } catch (err) {
-          console.error(err.message);
-          setError(err.message);
+          if (err.name !== "AbortError") {
+            console.error(err.message);
+            setError(err.message);
+          }
         } finally {
           setIsLoading(false);
         }
@@ -106,7 +117,12 @@ export default function App() {
         return;
       }
 
+      handleCloseMovie();
       fetchMovies();
+
+      return function () {
+        controller.abort();
+      };
     },
     [query]
   );
@@ -114,7 +130,7 @@ export default function App() {
   return (
     <div>
       <NavBar>
-        <Logo />
+        <Logo onHome={handleHome} />
         <Search query={query} setQuery={setQuery} />
         <NumResult movies={movies} />
       </NavBar>
@@ -200,6 +216,22 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 
   useEffect(
     function () {
+      function callback(e) {
+        if (e.code === "Escape") {
+          onCloseMovie();
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      return function () {
+        document.removeEventListener("keydown", callback);
+      };
+    },
+    [onCloseMovie]
+  );
+
+  useEffect(
+    function () {
       async function getMovieDetails() {
         setIsLoading(true);
         const res = await fetch(
@@ -213,6 +245,18 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
       getMovieDetails();
     },
     [selectedId]
+  );
+
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `${title} - usePopcorn`;
+
+      return function () {
+        document.title = "usePopcorn";
+      };
+    },
+    [title]
   );
 
   return (
@@ -300,9 +344,9 @@ function Search({ query, setQuery }) {
   );
 }
 
-function Logo() {
+function Logo({ onHome }) {
   return (
-    <div className="logo">
+    <div className="logo" onClick={() => onHome()}>
       <span role="img">🍿</span>
       <h1>usePopcorn</h1>
     </div>
