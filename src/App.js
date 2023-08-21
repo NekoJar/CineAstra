@@ -1,53 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import StarRating from "./StarRating";
-
-const tempMovieData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
-
-const tempWatchedData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -63,8 +16,10 @@ export default function App() {
     return JSON.parse(storedValue);
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+  const inputEl = useRef(null);
 
   function handleSelectMovie(id) {
     setSelectedId((selectedId) => (selectedId === id ? null : id));
@@ -82,6 +37,10 @@ export default function App() {
     setWatched((watched) => watched.filter((movie) => movie.imdbID !== id));
   }
 
+  function handleFocusSearchBar() {
+    inputEl.current.focus();
+  }
+
   useEffect(
     function () {
       localStorage.setItem("watched", JSON.stringify(watched));
@@ -93,6 +52,18 @@ export default function App() {
     setQuery("");
     setSelectedId(null);
   }
+
+  useEffect(function () {
+    async function startUpLoading() {
+      setIsLoadingMenu(true);
+      const res = await fetch(`http://www.omdbapi.com/?apikey=${KEY}`);
+      console.log(res);
+      setTimeout(() => {
+        setIsLoadingMenu(false);
+      }, 2000);
+    }
+    startUpLoading();
+  }, []);
 
   useEffect(
     function () {
@@ -122,7 +93,7 @@ export default function App() {
           setIsLoading(false);
         }
       }
-      if (query.length < 3) {
+      if (query.length < 1) {
         setMovies([]);
         setError("");
         return;
@@ -142,36 +113,56 @@ export default function App() {
     <div>
       <NavBar>
         <Logo onHome={handleHome} />
-        <Search query={query} setQuery={setQuery} />
+        <Search query={query} setQuery={setQuery} inputEl={inputEl} />
         <NumResult movies={movies} />
       </NavBar>
-      <Main>
-        <Box>
-          {isLoading && <Loader />}
-          {!isLoading && !error && (
-            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
-          )}
-          {error && <ErrorMessage message={error} />}
-        </Box>
-        <Box>
-          {selectedId ? (
-            <MovieDetails
-              selectedId={selectedId}
-              onCloseMovie={handleCloseMovie}
-              onAddWatched={handleAddWatched}
-              watched={watched}
-            />
-          ) : (
-            <>
-              <WatchedSummary watched={watched} />
-              <WatchedList
-                watched={watched}
-                onRemoveWatchedMovie={handleRemoveWatchedMovie}
-              />
-            </>
-          )}
-        </Box>
-      </Main>
+      <>
+        {isLoadingMenu ? (
+          <Loader />
+        ) : (
+          <Main>
+            <Box>
+              {query === "" ? (
+                <div className="nothing-box">
+                  <p className="to-search">Searching movies?</p>
+                  <button className="btn-search" onClick={handleFocusSearchBar}>
+                    Click here
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {isLoading && <Loader />}
+                  {!isLoading && !error && (
+                    <MovieList
+                      movies={movies}
+                      onSelectMovie={handleSelectMovie}
+                    />
+                  )}
+                  {error && <ErrorMessage message={error} />}
+                </>
+              )}
+            </Box>
+            <Box>
+              {selectedId ? (
+                <MovieDetails
+                  selectedId={selectedId}
+                  onCloseMovie={handleCloseMovie}
+                  onAddWatched={handleAddWatched}
+                  watched={watched}
+                />
+              ) : (
+                <>
+                  <WatchedSummary watched={watched} />
+                  <WatchedList
+                    watched={watched}
+                    onRemoveWatchedMovie={handleRemoveWatchedMovie}
+                  />
+                </>
+              )}
+            </Box>
+          </Main>
+        )}
+      </>
     </div>
   );
 }
@@ -343,7 +334,34 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
 function NavBar({ children }) {
   return <nav className="nav-bar">{children}</nav>;
 }
-function Search({ query, setQuery }) {
+
+function Search({ query, setQuery, inputEl }) {
+  useEffect(function () {
+    inputEl.current.focus();
+  }, []);
+
+  useEffect(
+    function () {
+      function callback(e) {
+        if (document.activeElement === inputEl.current) {
+          if (e.code === "Escape") {
+            inputEl.current.blur();
+          }
+          if (e.code === "Enter") return;
+        }
+
+        if (e.code === "Enter") {
+          inputEl.current.focus();
+          setQuery("");
+        }
+      }
+      document.addEventListener("keydown", callback);
+
+      return () => document.removeEventListener("keydown", callback);
+    },
+    [setQuery]
+  );
+
   return (
     <input
       className="search"
@@ -351,6 +369,7 @@ function Search({ query, setQuery }) {
       placeholder="Search movies..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
+      ref={inputEl}
     />
   );
 }
@@ -365,6 +384,13 @@ function Logo({ onHome }) {
 }
 
 function NumResult({ movies }) {
+  if (!movies.length)
+    return (
+      <p className="num-results">
+        Found <strong>0</strong> results
+      </p>
+    );
+
   return (
     <p className="num-results">
       Found <strong>{movies.length}</strong> results

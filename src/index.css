@@ -1,6 +1,6 @@
 :root {
   --color-primary: #6741d9;
-  --color-primary-light: #7950f2;
+  --color-primary-light: #8b67f7;
   --color-text: #dee2e6;
   --color-text-dark: #adb5bd;
   --color-background-100: #343a40;
@@ -8,6 +8,26 @@
   --color-background-900: #212529;
   --color-red: #fa5252;
   --color-red-dark: #e03131;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 * {
@@ -62,6 +82,39 @@ body {
   display: none;
 }
 
+.nothing-box {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.to-search {
+  justify-content: center;
+  text-align: center;
+  font-size: 3.5rem;
+  padding: 4.2rem;
+  padding-top: 26rem;
+  padding-bottom: 2rem;
+  font-weight: bold;
+}
+
+.btn-search {
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: 10rem;
+  font-size: 1.6rem;
+  padding-inline: 3rem;
+  padding-block: 1.2rem;
+  font-weight: normal;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-search:hover {
+  background-color: var(--color-primary-light);
+}
+
 .loader {
   text-align: center;
   text-transform: uppercase;
@@ -106,7 +159,8 @@ body {
   color: var(--color-text);
 
   /* background-color: var(--color-background-900); */
-  background-color: var(--color-primary-light);
+  background-color: var(--color-primary);
+  transition: background-color 1s;
 }
 
 .search::placeholder {
@@ -116,7 +170,9 @@ body {
 .search:focus {
   outline: none;
   box-shadow: 0 2.4rem 2.4rem rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  animation: bounce 0.5s ease-in-out;
+  background-color: var(--color-primary-light);
+  transition: background-color 1s;
 }
 
 .num-results {
