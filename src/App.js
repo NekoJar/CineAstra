@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 
-import StarRating from "./StarRating";
-import { useMovie } from "./useMovie";
-import { useLocalStorageState } from "./useLocalStorageState";
+import StarRating from "./components/StarRating";
+import { useMovie } from "./hooks/useMovie";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
+import { useKey } from "./hooks/useKey";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -170,21 +171,7 @@ function MovieDetails({
     onCloseMovie();
   }
 
-  useEffect(
-    function () {
-      function callback(e) {
-        if (e.code === "Backspace") {
-          onCloseMovie();
-        }
-      }
-      document.addEventListener("keydown", callback);
-
-      return function () {
-        document.removeEventListener("keydown", callback);
-      };
-    },
-    [onCloseMovie, inputEl]
-  );
+  useKey("Backspace", onCloseMovie);
 
   useEffect(
     function () {
@@ -303,7 +290,6 @@ function Search({ query, setQuery, inputEl }) {
           }
           if (e.code === "Enter") return;
         }
-
         if (e.code === "Enter") {
           inputEl.current.focus();
           setQuery("");
