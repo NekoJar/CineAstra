@@ -149,6 +149,7 @@ export default function App() {
                   onCloseMovie={handleCloseMovie}
                   onAddWatched={handleAddWatched}
                   watched={watched}
+                  inputEl={inputEl}
                 />
               ) : (
                 <>
@@ -179,7 +180,13 @@ function ErrorMessage({ message }) {
   );
 }
 
-function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
+function MovieDetails({
+  selectedId,
+  onCloseMovie,
+  onAddWatched,
+  watched,
+  inputEl,
+}) {
   const [movie, setMovie] = useState({});
   const [userRating, setUserRating] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -219,7 +226,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   useEffect(
     function () {
       function callback(e) {
-        if (e.code === "Escape") {
+        if (e.code === "Escape" && document.activeElement !== inputEl.current) {
           onCloseMovie();
         }
       }
@@ -229,7 +236,7 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
         document.removeEventListener("keydown", callback);
       };
     },
-    [onCloseMovie]
+    [onCloseMovie, inputEl]
   );
 
   useEffect(
@@ -252,10 +259,10 @@ function MovieDetails({ selectedId, onCloseMovie, onAddWatched, watched }) {
   useEffect(
     function () {
       if (!title) return;
-      document.title = `${title} - usePopcorn`;
+      document.title = `${title} - CineAstra`;
 
       return function () {
-        document.title = "usePopcorn";
+        document.title = "CineAstra";
       };
     },
     [title]
@@ -344,7 +351,10 @@ function Search({ query, setQuery, inputEl }) {
     function () {
       function callback(e) {
         if (document.activeElement === inputEl.current) {
-          if (e.code === "Escape") {
+          if (
+            e.code === "Escape" &&
+            document.activeElement === inputEl.current
+          ) {
             inputEl.current.blur();
           }
           if (e.code === "Enter") return;
@@ -359,7 +369,7 @@ function Search({ query, setQuery, inputEl }) {
 
       return () => document.removeEventListener("keydown", callback);
     },
-    [setQuery]
+    [setQuery, inputEl]
   );
 
   return (
@@ -378,7 +388,7 @@ function Logo({ onHome }) {
   return (
     <div className="logo" onClick={() => onHome()}>
       <span role="img">🍿</span>
-      <h1>usePopcorn</h1>
+      <h1>CineAstra</h1>
     </div>
   );
 }
