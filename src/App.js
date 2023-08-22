@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import StarRating from "./StarRating";
+import { useMovie } from "./useMovie";
+import { useLocalStorageState } from "./useLocalStorageState";
 
 const average = (arr) =>
   arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
@@ -9,16 +11,12 @@ const KEY = "923066e6";
 
 export default function App() {
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
-  // const [watched, setWatched] = useState([]);
-  const [watched, setWatched] = useState(function () {
-    const storedValue = localStorage.getItem("watched");
-    return JSON.parse(storedValue);
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
-  const [error, setError] = useState("");
   const [selectedId, setSelectedId] = useState(null);
+
+  const { movies, isLoading, error } = useMovie(query);
+  const [watched, setWatched] = useLocalStorageState([], "watched");
+
+  const [isLoadingMenu, setIsLoadingMenu] = useState(false);
   const inputEl = useRef(null);
 
   function handleSelectMovie(id) {
@@ -41,13 +39,6 @@ export default function App() {
     inputEl.current.focus();
   }
 
-  useEffect(
-    function () {
-      localStorage.setItem("watched", JSON.stringify(watched));
-    },
-    [watched]
-  );
-
   function handleHome() {
     setQuery("");
     setSelectedId(null);
@@ -64,50 +55,6 @@ export default function App() {
     }
     startUpLoading();
   }, []);
-
-  useEffect(
-    function () {
-      const controller = new AbortController();
-
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,
-            { signal: controller.signal }
-          );
-
-          if (!res.ok) throw new Error("Fetch Data Failed");
-
-          const data = await res.json();
-          if (data.Response === "False") throw new Error("Movie Not Found");
-          setMovies(data.Search);
-          setError("");
-        } catch (err) {
-          if (err.name !== "AbortError") {
-            console.error(err.message);
-            setError(err.message);
-          }
-        } finally {
-          setIsLoading(false);
-        }
-      }
-      if (query.length < 1) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-
-      handleCloseMovie();
-      fetchMovies();
-
-      return function () {
-        controller.abort();
-      };
-    },
-    [query]
-  );
 
   return (
     <div>
@@ -351,10 +298,7 @@ function Search({ query, setQuery, inputEl }) {
     function () {
       function callback(e) {
         if (document.activeElement === inputEl.current) {
-          if (
-            e.code === "Escape" &&
-            document.activeElement === inputEl.current
-          ) {
+          if (e.code === "Escape") {
             inputEl.current.blur();
           }
           if (e.code === "Enter") return;
