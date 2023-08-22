@@ -173,7 +173,7 @@ function MovieDetails({
   useEffect(
     function () {
       function callback(e) {
-        if (e.code === "Escape" && document.activeElement !== inputEl.current) {
+        if (e.code === "Backspace") {
           onCloseMovie();
         }
       }
